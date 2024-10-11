@@ -8,7 +8,7 @@ export default function Home() {
         title="Unlock the Full Potential of Your Shopify Store"
         subtitle="Custom Blocks, Sections, and Theme Customizations Tailored for Your Brand"
         buttonText="Explore Our Products"
-        buttonLink="#"
+        buttonLink="/products"
       />
     </div>
   );

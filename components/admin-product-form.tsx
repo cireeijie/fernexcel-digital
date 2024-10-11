@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { storage } from "@/app/firebase/config";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
@@ -40,11 +40,9 @@ import {
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
-import { z } from "zod";
 
 import { Textarea } from "@/components/ui/textarea";
-import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Form,
@@ -57,57 +55,42 @@ import {
 import { toast } from "@/hooks/use-toast";
 import Preloader from "@/components/preloader";
 import { createProduct, updateProduct } from "@/app/api/firebase";
+import { ProductType } from "@/types/types";
+import { ProductFormSchema } from "@/schemas/schemas";
 
-const FormSchema = z.object({
-  name: z.string().min(3, {
-    message: "Name must be at least 3 characters.",
-  }),
-  description: z.string().min(2, {
-    message: "Description must be at least 2 characters.",
-  }),
-  category: z.string(),
-  stocks: z.array(
-    z.object({
-      sku: z.string(),
-      stock: z.coerce.number(),
-      price: z.coerce.number(),
-      salePrice: z.coerce.number(),
-      variantName: z.string(),
-      //   variantType: z.string(),
-    })
-  ),
-  image: z.object({
-    name: z.string(),
-    src: z.string(),
-  }),
-  status: z.string(),
-});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default function AdminProductForm({
+  product,
+  formType,
+}: {
+  product: ProductType | undefined;
+  formType: "CREATE" | "UPDATE";
+}) {
+  const router = useRouter();
 
-export default function AdminProductForm({ product }: { product: any }) {
-  const { productId } = useParams();
-  const pathname = usePathname();
-
-  const [isNewProduct, setIsNewProduct] = useState(productId === "new-product");
+  const [loading, setLoading] = useState(false);
 
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [uploadedUrl, setUploadedUrl] = useState<string | null>(
+  const [uploadedUrl, setUploadedUrl] = useState<string | undefined>(
     product?.image?.src
   );
   const [updateImage, setUpdateImage] = useState(false);
 
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const form = useForm<ProductType>({
+    resolver: zodResolver(ProductFormSchema),
     defaultValues: {
-      name: product.name || "",
-      description: product.description || "",
-      category: product.category || "",
-      stocks: product.stocks || [],
-      image: product.image || {
+      id: product?.id || "",
+      name: product?.name || "",
+      description: product?.description || "",
+      category: product?.category || "",
+      stocks: product?.stocks || [],
+      image: product?.image || {
         name: "",
         src: "",
       },
-      status: product.status || "",
+      status: product?.status || "",
+      totalSales: product?.totalSales || 0,
     },
     mode: "onChange",
   });
@@ -191,30 +174,70 @@ export default function AdminProductForm({ product }: { product: any }) {
     });
   };
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  const createForm = async (data: ProductType) => {
+    try {
+      const response = await createProduct(data);
+
+      if (response.status === 200) {
+        toast({
+          title: "Product created",
+          description: "The product was created successfully.",
+        });
+
+        router.push(`/admin/products/${response.id}`);
+      } else {
+        toast({
+          title: "Something went wrong",
+          description: "An error occurred while creating the product.",
+        });
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+      toast({
+        title: "Server error",
+        description: e.message,
+      });
+    }
+  };
+
+  const updateForm = async (data: ProductType) => {
+    try {
+      const response = await updateProduct(data.id || undefined, data);
+
+      if (response.status === 200) {
+        toast({
+          title: "Product updated",
+          description: "The product was updated successfully.",
+        });
+      } else {
+        toast({
+          title: "Something went wrong",
+          description: "An error occurred while updating the product.",
+        });
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+      toast({
+        title: "Server error",
+        description: e.message,
+      });
+    }
+  };
+
+  async function onSubmit(data: ProductType) {
+    setLoading(true);
+
     data.image.name = file?.name || "";
     data.image.src = uploadedUrl || "";
-    const response = isNewProduct
-      ? await createProduct(data)
-      : await updateProduct(product.id, data);
 
-    console.log("Response: ", response);
-
-    toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    });
-  }
-
-  useEffect(() => {
-    if (pathname.includes("new-product")) {
-      setIsNewProduct(true);
+    if (formType === "CREATE") {
+      await createForm(data);
+    } else {
+      await updateForm(data);
     }
-  }, [pathname]);
+
+    setLoading(false);
+  }
 
   return (
     <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 ">
@@ -223,24 +246,39 @@ export default function AdminProductForm({ product }: { product: any }) {
           <div className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
             <div className="flex items-center gap-4">
               <Link href="/admin/products">
-                <Button variant="outline" size="icon" className="h-7 w-7">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={loading}
+                >
                   <ChevronLeft className="h-4 w-4" />
                   <span className="sr-only">Back</span>
                 </Button>
               </Link>
               <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-                {isNewProduct ? "New Product" : "Product Details"}
+                {formType === "CREATE" ? "New Product" : product?.name}
               </h1>
-              {!isNewProduct && (
+              {!formType && (
                 <Badge variant="outline" className="ml-auto sm:ml-0">
-                  In stock
+                  {product?.status}
                 </Badge>
               )}
               <div className="hidden items-center gap-2 md:ml-auto md:flex">
-                <Button variant="outline" size="sm">
-                  Discard
+                <Link href="/admin/products">
+                  <Button variant="outline" size="sm" disabled={loading}>
+                    {formType === "CREATE" ? "Discard" : "Cancel"}
+                  </Button>
+                </Link>
+                <Button size="sm">
+                  {loading
+                    ? formType === "CREATE"
+                      ? "Creating..."
+                      : "Updating"
+                    : formType === "CREATE"
+                    ? "Create Product"
+                    : "Update"}
                 </Button>
-                <Button size="sm">Save Product</Button>
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
@@ -534,7 +572,7 @@ export default function AdminProductForm({ product }: { product: any }) {
                             width="300"
                           />
                           <Button
-                            className="flex items-center gap-2 w-full"
+                            className="flex items-center gap-2 w-full mt-3"
                             onClick={(e) => {
                               e.preventDefault();
                               setUpdateImage(true);
@@ -562,7 +600,7 @@ export default function AdminProductForm({ product }: { product: any }) {
                       )}
                       {updateImage && (
                         <Button
-                          className={`${uploading ? "opacity-0" : ""}`}
+                          className={`${uploading ? "opacity-0" : ""} mt-1`}
                           variant="destructive"
                           onClick={(e) => {
                             e.preventDefault();

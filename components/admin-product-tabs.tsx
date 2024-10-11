@@ -40,13 +40,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { deleteProduct } from "@/app/api/firebase";
 import { toast } from "@/hooks/use-toast";
-export default function AdminProductTabs({ data }: any) {
+import { ProductType } from "@/types/types";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default function AdminProductTabs({
+  data,
+}: {
+  data: { products: ProductType[] };
+}) {
   const [productsList, setProductsList] = useState(data.products);
+  const [activeTab, setActiveTab] = useState<
+    "all" | "active" | "draft" | "archived"
+  >("all");
 
-  console.log("data: ", data);
-  console.log(productsList);
+  const handleTabChange = (tab: "all" | "active" | "draft" | "archived") => {
+    setActiveTab(tab);
 
-  const timestampToDate = (timestamp: any) => {
+    if (tab === "all") {
+      setProductsList(data.products);
+    } else {
+      setProductsList(
+        data.products.filter((product: ProductType) => product.status === tab)
+      );
+    }
+  };
+
+  const timestampToDate = (timestamp: { seconds: number }) => {
     const date = new Date(timestamp.seconds * 1000);
     return date.toLocaleString("en-US", {
       month: "long",
@@ -59,11 +77,15 @@ export default function AdminProductTabs({ data }: any) {
     });
   };
 
-  const handleDelete = async (id: string, name: string) => {
+  const handleDelete = async (id: string | undefined, name: string) => {
+    if (!id) return;
+
     const response = await deleteProduct(id);
 
     if (response.status === 200) {
-      setProductsList(productsList.filter((product: any) => product.id !== id));
+      setProductsList(
+        productsList.filter((product: ProductType) => product.id !== id)
+      );
       toast({
         title: `Product "${name}" deleted`,
         description: "The product was deleted successfully.",
@@ -80,10 +102,20 @@ export default function AdminProductTabs({ data }: any) {
     <Tabs defaultValue="all">
       <div className="flex items-center">
         <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="draft">Draft</TabsTrigger>
-          <TabsTrigger value="archived" className="hidden sm:flex">
+          <TabsTrigger value="all" onClick={() => handleTabChange("all")}>
+            All
+          </TabsTrigger>
+          <TabsTrigger value="active" onClick={() => handleTabChange("active")}>
+            Active
+          </TabsTrigger>
+          <TabsTrigger value="draft" onClick={() => handleTabChange("draft")}>
+            Draft
+          </TabsTrigger>
+          <TabsTrigger
+            value="archived"
+            className="hidden sm:flex"
+            onClick={() => handleTabChange("archived")}
+          >
             Archived
           </TabsTrigger>
         </TabsList>
@@ -123,7 +155,7 @@ export default function AdminProductTabs({ data }: any) {
           </Link>
         </div>
       </div>
-      <TabsContent value="all">
+      <TabsContent value={activeTab}>
         <Card x-chunk="dashboard-06-chunk-0">
           <CardHeader>
             <CardTitle>Products</CardTitle>
@@ -154,7 +186,7 @@ export default function AdminProductTabs({ data }: any) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {productsList.map((product: any, index: number) => (
+                  {productsList.map((product: ProductType, index: number) => (
                     <TableRow key={index}>
                       <TableCell className="hidden sm:table-cell">
                         {product.image.src ? (
@@ -178,30 +210,24 @@ export default function AdminProductTabs({ data }: any) {
                         <Badge variant="outline">{product.status}</Badge>
                       </TableCell>
                       <TableCell>
-                        {product.stocks[0].price >
-                        product.stocks[0].salePrice ? (
+                        {product.stocks[0].salePrice > 0 ? (
                           <>
                             <span>
-                              $
-                              {parseFloat(product.stocks[0].salePrice).toFixed(
-                                2
-                              )}
+                              ${product.stocks[0].salePrice.toFixed(2)}
                             </span>
                             <Badge className="ml-2" variant="outline">
                               on sale
                             </Badge>
                           </>
                         ) : (
-                          <span>
-                            ${parseFloat(product.stocks[0].price).toFixed(2)}
-                          </span>
+                          <span>${product.stocks[0].price.toFixed(2)}</span>
                         )}
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         {product.totalSales}
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {timestampToDate(product.createdAt)}
+                        {timestampToDate(product?.createdAt)}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -224,7 +250,10 @@ export default function AdminProductTabs({ data }: any) {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
-                                handleDelete(product.id, product.name)
+                                handleDelete(
+                                  product.id || undefined,
+                                  product.name
+                                )
                               }
                             >
                               Delete
@@ -244,7 +273,7 @@ export default function AdminProductTabs({ data }: any) {
             {productsList.length > 0 && (
               <div className="text-xs text-muted-foreground">
                 Showing <strong>1-{productsList.length}</strong> of{" "}
-                <strong>{data.products.length}</strong> products
+                <strong>{productsList.length}</strong> products
               </div>
             )}
           </CardFooter>
