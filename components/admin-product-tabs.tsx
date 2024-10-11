@@ -41,13 +41,13 @@ import Link from "next/link";
 import { deleteProduct } from "@/app/api/firebase";
 import { toast } from "@/hooks/use-toast";
 import { ProductType } from "@/types/types";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export default function AdminProductTabs({
-  data,
+  products,
 }: {
-  data: { products: ProductType[] | null };
+  products: ProductType[];
 }) {
-  const [productsList, setProductsList] = useState(data.products || []);
+  const [productsList, setProductsList] = useState(products);
   const [activeTab, setActiveTab] = useState<
     "all" | "active" | "draft" | "archived"
   >("all");
@@ -55,13 +55,13 @@ export default function AdminProductTabs({
   const handleTabChange = (tab: "all" | "active" | "draft" | "archived") => {
     setActiveTab(tab);
 
-    if (!data.products) return;
+    if (!products) return;
 
     if (tab === "all") {
-      setProductsList(data.products);
+      setProductsList(products);
     } else {
       setProductsList(
-        data.products.filter((product: ProductType) => product.status === tab)
+        products.filter((product: ProductType) => product.status === tab)
       );
     }
   };
