@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { storage } from "@/app/firebase/config";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { auth, storage } from "@/app/firebase/config";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
   ChevronLeft,
@@ -42,7 +42,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import { Textarea } from "@/components/ui/textarea";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Form,
@@ -67,8 +67,9 @@ export default function AdminProductForm({
   formType: "CREATE" | "UPDATE";
 }) {
   const router = useRouter();
+  const pathname = usePathname();
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -237,6 +238,29 @@ export default function AdminProductForm({
     }
 
     setLoading(false);
+  }
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setLoading(false);
+        router.push(pathname);
+      } else {
+        setTimeout(() => {
+          router.push("/sign-in");
+        }, 1000);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="fixed z-50 top-0 left-0 h-screen w-full flex justify-center items-center">
+        <Preloader />
+      </div>
+    );
   }
 
   return (

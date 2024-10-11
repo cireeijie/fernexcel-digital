@@ -1,3 +1,7 @@
+"use client";
+
+import { auth } from "@/app/firebase/config";
+import Preloader from "@/components/preloader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,9 +28,37 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import React from "react";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
 export default function Dashboard() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setLoading(false);
+        router.push(pathname);
+      } else {
+        setTimeout(() => {
+          router.push("/sign-in");
+        }, 1000);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="fixed z-50 top-0 left-0 h-screen w-full flex justify-center items-center">
+        <Preloader />
+      </div>
+    );
+  }
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">

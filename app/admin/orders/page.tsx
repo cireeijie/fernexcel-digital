@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import {
   ChevronLeft,
@@ -45,8 +47,39 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import Preloader from "@/components/preloader";
+import { auth } from "@/app/firebase/config";
 
 export default function Orders() {
+  const [loading, setLoading] = useState(true);
+  const pathname = usePathname();
+
+  const router = useRouter();
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setLoading(false);
+        router.push(pathname);
+      } else {
+        setTimeout(() => {
+          router.push("/sign-in");
+        }, 1000);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="fixed z-50 top-0 left-0 h-screen w-full flex justify-center items-center">
+        <Preloader />
+      </div>
+    );
+  }
+
   return (
     <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 lg:grid-cols-3 xl:grid-cols-3">
       <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">

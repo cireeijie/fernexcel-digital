@@ -45,15 +45,17 @@ import { ProductType } from "@/types/types";
 export default function AdminProductTabs({
   data,
 }: {
-  data: { products: ProductType[] };
+  data: { products: ProductType[] | null };
 }) {
-  const [productsList, setProductsList] = useState(data.products);
+  const [productsList, setProductsList] = useState(data.products || []);
   const [activeTab, setActiveTab] = useState<
     "all" | "active" | "draft" | "archived"
   >("all");
 
   const handleTabChange = (tab: "all" | "active" | "draft" | "archived") => {
     setActiveTab(tab);
+
+    if (!data.products) return;
 
     if (tab === "all") {
       setProductsList(data.products);

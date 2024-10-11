@@ -10,7 +10,7 @@ export default function Admin() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        router.push("/admin/dashboard");
+        router.push("/admin/products");
       } else {
         setTimeout(() => {
           router.push("/sign-in");
