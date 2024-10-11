@@ -1,6 +1,5 @@
 import { getAllProducts } from "@/app/api/firebase";
 import AdminProductTabs from "@/components/admin-product-tabs";
-import { ProductType } from "@/types/types";
 
 export default async function Products() {
   const data = await getAllProducts();

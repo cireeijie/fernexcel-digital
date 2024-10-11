@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { auth, storage } from "@/app/firebase/config";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {

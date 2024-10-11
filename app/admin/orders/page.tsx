@@ -70,7 +70,7 @@ export default function Orders() {
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [router, pathname]);
 
   if (loading) {
     return (
