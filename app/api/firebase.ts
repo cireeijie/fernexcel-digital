@@ -25,6 +25,13 @@ export const createProduct = async (
 
     const docRef = await addDoc(collection(db, "products"), productData);
 
+    if (!docRef) {
+      return { status: 500, message: "Something went wrong" };
+    }
+
+    const updateDocRef = doc(db, "products", docRef.id);
+    await updateDoc(updateDocRef, { id: docRef.id });
+
     return { status: 200, message: "Product created", id: docRef.id };
   } catch (e) {
     return { status: 500, message: "Something went wrong", error: e as Error };

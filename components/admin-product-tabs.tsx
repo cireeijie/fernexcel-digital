@@ -52,6 +52,8 @@ export default function AdminProductTabs({
     "all" | "active" | "draft" | "archived"
   >("all");
 
+  console.log(products);
+
   const handleTabChange = (tab: "all" | "active" | "draft" | "archived") => {
     setActiveTab(tab);
 

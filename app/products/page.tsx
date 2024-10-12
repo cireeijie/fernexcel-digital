@@ -15,7 +15,11 @@ export default async function Products() {
           </h1>
           <p>Quality and Innovation Designed Just for You</p>
         </div>
-        <ProductListing data={products} />
+        <div className="pb-20">
+          <ProductListing
+            data={products.filter((product) => product.status === "active")}
+          />
+        </div>
       </div>
     </main>
   );

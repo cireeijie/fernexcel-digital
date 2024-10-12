@@ -20,17 +20,17 @@ export default function ProductCard({ product }: { product: ProductType }) {
 
   return (
     <Card className="w-full sm:max-w-xs rounded-xl border width">
-      <div className="grid gap-4 p-4">
-        <div className="aspect-[4/5] w-full overflow-hidden rounded-xl border">
+      <div className="flex flex-col gap-4 p-4 h-full">
+        <div className="aspect-[4/5] w-full overflow-hidden rounded-xl border flex justify-center items-center">
           <Image
             src={product.image.src}
             alt={product.image.name}
             width="400"
             height="500"
-            className="aspect-[4/5] object-cover w-full"
+            className="w-full"
           />
         </div>
-        <div className="grid gap-1.5">
+        <div className="grid gap-1.5 flex-1">
           <h3 className="font-semibold text-sm md:text-base">{product.name}</h3>
           <div className="flex gap-1 flex-wrap">
             {product.stocks.length > 0 ? (
@@ -75,8 +75,10 @@ export default function ProductCard({ product }: { product: ProductType }) {
             {product.description}
           </p>
         </div>
-        <Link href="https://discord.gg/zBmbKJq3">
-          <Button size="sm">Get a quote</Button>
+        <Link href="https://discord.gg/zBmbKJq3" target="_blank">
+          <Button className="w-full" size="sm">
+            Get a quote
+          </Button>
         </Link>
       </div>
     </Card>
