@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { Card } from "./card";
 import { Button } from "./button";
 import { Badge } from "./badge";
+import Link from "next/link";
 
 export default function ProductCard({ product }: { product: ProductType }) {
   const [selectedVariant, setSelectedVariant] = useState(product.stocks[0]);
@@ -74,7 +75,9 @@ export default function ProductCard({ product }: { product: ProductType }) {
             {product.description}
           </p>
         </div>
-        <Button size="sm">Get a quote</Button>
+        <Link href="https://discord.gg/zBmbKJq3">
+          <Button size="sm">Get a quote</Button>
+        </Link>
       </div>
     </Card>
   );
