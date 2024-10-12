@@ -253,7 +253,7 @@ export default function AdminProductForm({
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [router, pathname]);
 
   if (loading) {
     return (

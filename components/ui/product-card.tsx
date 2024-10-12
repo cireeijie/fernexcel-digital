@@ -14,14 +14,12 @@ export default function ProductCard({ product }: { product: ProductType }) {
   const handleVariantChange = (sku: string) => {
     const variant = product.stocks.find((stock) => stock.sku === sku);
     if (variant) setSelectedVariant(variant);
-
-    console.log(variant);
   };
 
   return (
     <Card className="w-full sm:max-w-xs rounded-xl border width">
       <div className="flex flex-col gap-4 p-4 h-full">
-        <div className="aspect-[4/5] w-full overflow-hidden rounded-xl border flex justify-center items-center">
+        <div className="aspect-[1] sm:aspect-[4/5] w-full overflow-hidden rounded-xl border flex justify-center items-center">
           <Image
             src={product.image.src}
             alt={product.image.name}
